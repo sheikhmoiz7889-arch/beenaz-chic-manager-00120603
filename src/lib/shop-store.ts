@@ -108,9 +108,10 @@ export const cart = {
   add(productId: string) {
     const c = readCart();
     const existing = c.find((i) => i.productId === productId);
-    if (existing) existing.qty += 1;
-    else c.push({ productId, qty: 1 });
-    writeCart(c);
+    const next = existing
+      ? c.map((i) => (i.productId === productId ? { ...i, qty: i.qty + 1 } : i))
+      : [...c, { productId, qty: 1 }];
+    writeCart(next);
   },
   remove(productId: string) {
     writeCart(readCart().filter((i) => i.productId !== productId));
@@ -128,7 +129,7 @@ export function useStore() {
   return useSyncExternalStore(store.subscribe, store.get, store.get);
 }
 export function useCart() {
-  return useSyncExternalStore(cart.subscribe, cart.get, () => []);
+  return useSyncExternalStore(cart.subscribe, cart.get, cart.get);
 }
 
 export const WHATSAPP_NUMBER = "923086844441";
