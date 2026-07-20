@@ -17,12 +17,12 @@ function CartPage() {
       const p = products.find((x) => x.id === i.productId);
       return p ? { ...i, product: p } : null;
     })
-    .filter(Boolean) as { productId: string; qty: number; product: NonNullable<ReturnType<typeof products.find>> }[];
+    .filter(Boolean) as { productId: string; qty: number; size: string; product: NonNullable<ReturnType<typeof products.find>> }[];
 
   const total = lines.reduce((n, l) => n + l.product.price * l.qty, 0);
 
   const orderMessage = `Assalam-o-Alaikum! I want to order:\n\n${lines
-    .map((l) => `• ${l.product.name} x ${l.qty} = Rs. ${l.product.price * l.qty}`)
+    .map((l) => `• ${l.product.name} (Size ${l.size}) x ${l.qty} = Rs. ${l.product.price * l.qty}`)
     .join("\n")}\n\n*Total: Rs. ${total.toLocaleString()}*\n\nPlease confirm.`;
 
   return (
@@ -43,7 +43,7 @@ function CartPage() {
             <div className="mt-8 space-y-3">
               {lines.map((l) => (
                 <div
-                  key={l.productId}
+                  key={`${l.productId}-${l.size}`}
                   className="flex gap-4 rounded-xl border border-border bg-card p-3"
                 >
                   <img
@@ -54,26 +54,27 @@ function CartPage() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <h3 className="font-display text-lg">{l.product.name}</h3>
+                      <p className="text-xs text-muted-foreground">Size: {l.size}</p>
                       <p className="text-sm text-primary">
                         Rs. {l.product.price.toLocaleString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => cart.setQty(l.productId, l.qty - 1)}
+                        onClick={() => cart.setQty(l.productId, l.size, l.qty - 1)}
                         className="rounded border border-border p-1 hover:bg-accent"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
                       <span className="w-6 text-center text-sm">{l.qty}</span>
                       <button
-                        onClick={() => cart.setQty(l.productId, l.qty + 1)}
+                        onClick={() => cart.setQty(l.productId, l.size, l.qty + 1)}
                         className="rounded border border-border p-1 hover:bg-accent"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
                       <button
-                        onClick={() => cart.remove(l.productId)}
+                        onClick={() => cart.remove(l.productId, l.size)}
                         className="ml-auto rounded p-1 text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="h-4 w-4" />
