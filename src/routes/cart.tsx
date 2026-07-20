@@ -17,12 +17,12 @@ function CartPage() {
       const p = products.find((x) => x.id === i.productId);
       return p ? { ...i, product: p } : null;
     })
-    .filter(Boolean) as { productId: string; qty: number; product: NonNullable<ReturnType<typeof products.find>> }[];
+    .filter(Boolean) as { productId: string; qty: number; size: string; product: NonNullable<ReturnType<typeof products.find>> }[];
 
   const total = lines.reduce((n, l) => n + l.product.price * l.qty, 0);
 
   const orderMessage = `Assalam-o-Alaikum! I want to order:\n\n${lines
-    .map((l) => `• ${l.product.name} x ${l.qty} = Rs. ${l.product.price * l.qty}`)
+    .map((l) => `• ${l.product.name} (Size ${l.size}) x ${l.qty} = Rs. ${l.product.price * l.qty}`)
     .join("\n")}\n\n*Total: Rs. ${total.toLocaleString()}*\n\nPlease confirm.`;
 
   return (
