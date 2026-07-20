@@ -30,29 +30,37 @@ const seed: Data = {
 const listeners = new Set<() => void>();
 const cartListeners = new Set<() => void>();
 
+let dataCache: Data | null = null;
+let cartCache: CartItem[] | null = null;
+
 function read(): Data {
-  if (typeof window === "undefined") return seed;
+  if (dataCache) return dataCache;
+  if (typeof window === "undefined") return (dataCache = seed);
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return seed;
-    return JSON.parse(raw);
+    dataCache = raw ? JSON.parse(raw) : seed;
   } catch {
-    return seed;
+    dataCache = seed;
   }
+  return dataCache!;
 }
 function write(d: Data) {
+  dataCache = d;
   localStorage.setItem(KEY, JSON.stringify(d));
   listeners.forEach((l) => l());
 }
 function readCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
+  if (cartCache) return cartCache;
+  if (typeof window === "undefined") return (cartCache = []);
   try {
-    return JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    cartCache = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
   } catch {
-    return [];
+    cartCache = [];
   }
+  return cartCache!;
 }
 function writeCart(c: CartItem[]) {
+  cartCache = c;
   localStorage.setItem(CART_KEY, JSON.stringify(c));
   cartListeners.forEach((l) => l());
 }
@@ -65,29 +73,29 @@ export const store = {
   },
   addCategory(name: string) {
     const d = read();
-    d.categories.push({ id: crypto.randomUUID(), name });
-    write(d);
+    write({ ...d, categories: [...d.categories, { id: crypto.randomUUID(), name }] });
   },
   removeCategory(id: string) {
     const d = read();
-    d.categories = d.categories.filter((c) => c.id !== id);
-    d.products = d.products.filter((p) => p.categoryId !== id);
-    write(d);
+    write({
+      categories: d.categories.filter((c) => c.id !== id),
+      products: d.products.filter((p) => p.categoryId !== id),
+    });
   },
   addProduct(p: Omit<Product, "id" | "createdAt">) {
     const d = read();
-    d.products.unshift({ ...p, id: crypto.randomUUID(), createdAt: Date.now() });
-    write(d);
+    write({
+      ...d,
+      products: [{ ...p, id: crypto.randomUUID(), createdAt: Date.now() }, ...d.products],
+    });
   },
   removeProduct(id: string) {
     const d = read();
-    d.products = d.products.filter((p) => p.id !== id);
-    write(d);
+    write({ ...d, products: d.products.filter((p) => p.id !== id) });
   },
   updateProduct(id: string, patch: Partial<Product>) {
     const d = read();
-    d.products = d.products.map((p) => (p.id === id ? { ...p, ...patch } : p));
-    write(d);
+    write({ ...d, products: d.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) });
   },
 };
 
@@ -100,9 +108,10 @@ export const cart = {
   add(productId: string) {
     const c = readCart();
     const existing = c.find((i) => i.productId === productId);
-    if (existing) existing.qty += 1;
-    else c.push({ productId, qty: 1 });
-    writeCart(c);
+    const next = existing
+      ? c.map((i) => (i.productId === productId ? { ...i, qty: i.qty + 1 } : i))
+      : [...c, { productId, qty: 1 }];
+    writeCart(next);
   },
   remove(productId: string) {
     writeCart(readCart().filter((i) => i.productId !== productId));
@@ -120,7 +129,7 @@ export function useStore() {
   return useSyncExternalStore(store.subscribe, store.get, store.get);
 }
 export function useCart() {
-  return useSyncExternalStore(cart.subscribe, cart.get, () => []);
+  return useSyncExternalStore(cart.subscribe, cart.get, cart.get);
 }
 
 export const WHATSAPP_NUMBER = "923086844441";
