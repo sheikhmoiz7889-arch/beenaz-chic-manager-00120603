@@ -30,29 +30,37 @@ const seed: Data = {
 const listeners = new Set<() => void>();
 const cartListeners = new Set<() => void>();
 
+let dataCache: Data | null = null;
+let cartCache: CartItem[] | null = null;
+
 function read(): Data {
-  if (typeof window === "undefined") return seed;
+  if (dataCache) return dataCache;
+  if (typeof window === "undefined") return (dataCache = seed);
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return seed;
-    return JSON.parse(raw);
+    dataCache = raw ? JSON.parse(raw) : seed;
   } catch {
-    return seed;
+    dataCache = seed;
   }
+  return dataCache!;
 }
 function write(d: Data) {
+  dataCache = d;
   localStorage.setItem(KEY, JSON.stringify(d));
   listeners.forEach((l) => l());
 }
 function readCart(): CartItem[] {
-  if (typeof window === "undefined") return [];
+  if (cartCache) return cartCache;
+  if (typeof window === "undefined") return (cartCache = []);
   try {
-    return JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    cartCache = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
   } catch {
-    return [];
+    cartCache = [];
   }
+  return cartCache!;
 }
 function writeCart(c: CartItem[]) {
+  cartCache = c;
   localStorage.setItem(CART_KEY, JSON.stringify(c));
   cartListeners.forEach((l) => l());
 }
