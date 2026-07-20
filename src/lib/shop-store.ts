@@ -107,20 +107,26 @@ export const cart = {
     cartListeners.add(l);
     return () => cartListeners.delete(l);
   },
-  add(productId: string) {
+  add(productId: string, size: string) {
     const c = readCart();
-    const existing = c.find((i) => i.productId === productId);
+    const existing = c.find((i) => i.productId === productId && i.size === size);
     const next = existing
-      ? c.map((i) => (i.productId === productId ? { ...i, qty: i.qty + 1 } : i))
-      : [...c, { productId, qty: 1 }];
+      ? c.map((i) =>
+          i.productId === productId && i.size === size ? { ...i, qty: i.qty + 1 } : i,
+        )
+      : [...c, { productId, qty: 1, size }];
     writeCart(next);
   },
-  remove(productId: string) {
-    writeCart(readCart().filter((i) => i.productId !== productId));
+  remove(productId: string, size: string) {
+    writeCart(readCart().filter((i) => !(i.productId === productId && i.size === size)));
   },
-  setQty(productId: string, qty: number) {
-    if (qty <= 0) return cart.remove(productId);
-    writeCart(readCart().map((i) => (i.productId === productId ? { ...i, qty } : i)));
+  setQty(productId: string, size: string, qty: number) {
+    if (qty <= 0) return cart.remove(productId, size);
+    writeCart(
+      readCart().map((i) =>
+        i.productId === productId && i.size === size ? { ...i, qty } : i,
+      ),
+    );
   },
   clear() {
     writeCart([]);
