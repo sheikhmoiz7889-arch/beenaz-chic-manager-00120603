@@ -10,7 +10,9 @@ export type Product = {
   images: string[]; // base64 data URLs
   createdAt: number;
 };
-export type CartItem = { productId: string; qty: number };
+export type CartItem = { productId: string; qty: number; size: string };
+
+export const SIZES = ["S", "M", "L", "XL", "XXL"] as const;
 
 const KEY = "beenaz_data_v1";
 const CART_KEY = "beenaz_cart_v1";
