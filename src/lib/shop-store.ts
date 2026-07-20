@@ -73,29 +73,29 @@ export const store = {
   },
   addCategory(name: string) {
     const d = read();
-    d.categories.push({ id: crypto.randomUUID(), name });
-    write(d);
+    write({ ...d, categories: [...d.categories, { id: crypto.randomUUID(), name }] });
   },
   removeCategory(id: string) {
     const d = read();
-    d.categories = d.categories.filter((c) => c.id !== id);
-    d.products = d.products.filter((p) => p.categoryId !== id);
-    write(d);
+    write({
+      categories: d.categories.filter((c) => c.id !== id),
+      products: d.products.filter((p) => p.categoryId !== id),
+    });
   },
   addProduct(p: Omit<Product, "id" | "createdAt">) {
     const d = read();
-    d.products.unshift({ ...p, id: crypto.randomUUID(), createdAt: Date.now() });
-    write(d);
+    write({
+      ...d,
+      products: [{ ...p, id: crypto.randomUUID(), createdAt: Date.now() }, ...d.products],
+    });
   },
   removeProduct(id: string) {
     const d = read();
-    d.products = d.products.filter((p) => p.id !== id);
-    write(d);
+    write({ ...d, products: d.products.filter((p) => p.id !== id) });
   },
   updateProduct(id: string, patch: Partial<Product>) {
     const d = read();
-    d.products = d.products.map((p) => (p.id === id ? { ...p, ...patch } : p));
-    write(d);
+    write({ ...d, products: d.products.map((p) => (p.id === id ? { ...p, ...patch } : p)) });
   },
 };
 
