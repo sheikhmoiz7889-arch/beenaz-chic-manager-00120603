@@ -84,13 +84,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Beenaz Fashion House — premium stitched variety of women's clothing in Bahria Town, Lahore. Order directly on WhatsApp.",
       },
-      { property: "og:title", content: "Beenaz Fashion House" },
+      { property: "og:title", content: "Beenaz Fashion House — Stitched Women's Clothing in Lahore" },
       {
         property: "og:description",
-        content: "Stitched variety of women's clothing — Bahria Town, Lahore.",
+        content: "Beenaz Fashion House — premium stitched variety of women's clothing in Bahria Town, Lahore. Order directly on WhatsApp.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Beenaz Fashion House — Stitched Women's Clothing in Lahore" },
+      { name: "twitter:description", content: "Beenaz Fashion House — premium stitched variety of women's clothing in Bahria Town, Lahore. Order directly on WhatsApp." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fa871b3a-ed30-49db-85f2-9db5d3b33589/id-preview-ef4a9810--1854437f-30ea-424d-8e2a-92c973172cc2.lovable.app-1784560678465.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fa871b3a-ed30-49db-85f2-9db5d3b33589/id-preview-ef4a9810--1854437f-30ea-424d-8e2a-92c973172cc2.lovable.app-1784560678465.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
