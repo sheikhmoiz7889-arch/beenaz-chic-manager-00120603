@@ -252,6 +252,31 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
+              <Label>Available sizes</Label>
+              <div className="flex flex-wrap gap-2">
+                {SIZES.map((s) => {
+                  const active = sizes.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSize(s)}
+                      className={`min-w-12 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-accent"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tap to toggle which sizes customers can pick for this product.
+              </p>
+            </div>
+            <div className="space-y-2 md:col-span-2">
               <Label>Images (any type — jpg, png, webp, gif...)</Label>
               <input
                 ref={fileRef}
