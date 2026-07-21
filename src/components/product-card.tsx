@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { ShoppingBag, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cart, whatsappOrderUrl, SIZES, type Product } from "@/lib/shop-store";
+import { cart, whatsappOrderUrl, type Product } from "@/lib/shop-store";
 import { toast } from "sonner";
 
 export function ProductCard({ product }: { product: Product }) {
   const img = product.images[0];
-  const [size, setSize] = useState<string>("M");
+  const available = product.sizes.length > 0 ? product.sizes : ["M"];
+  const [size, setSize] = useState<string>(available[0]);
   const orderMsg = `Assalam-o-Alaikum! I want to order:\n\n*${product.name}*\nSize: ${size}\nPrice: Rs. ${product.price}\n\nPlease share details.`;
   return (
     <div className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-lg">
@@ -38,7 +39,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div>
           <p className="mb-1.5 text-xs font-medium text-muted-foreground">Size</p>
           <div className="flex flex-wrap gap-1.5">
-            {SIZES.map((s) => (
+            {available.map((s) => (
               <button
                 key={s}
                 type="button"
@@ -59,9 +60,13 @@ export function ProductCard({ product }: { product: Product }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              cart.add(product.id, size);
-              toast.success(`Added to cart (Size ${size})`);
+            onClick={async () => {
+              try {
+                await cart.add(product.id, size);
+                toast.success(`Added to cart (Size ${size})`);
+              } catch (e) {
+                toast.error((e as Error).message || "Failed to add");
+              }
             }}
           >
             <ShoppingBag className="mr-1 h-4 w-4" /> Cart
