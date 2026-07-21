@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { store, useStore, fileToDataUrl } from "@/lib/shop-store";
+import { store, useStore, fileToDataUrl, SIZES } from "@/lib/shop-store";
 import { toast } from "sonner";
 
 const ADMIN_PASSWORD = "beenaz123";
@@ -82,7 +82,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>([...SIZES]);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function toggleSize(s: string) {
+    setSizes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -107,6 +112,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Add at least one image");
       return;
     }
+    if (sizes.length === 0) {
+      toast.error("Select at least one available size");
+      return;
+    }
     try {
       await store.addProduct({
         name,
@@ -114,11 +123,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         categoryId,
         description,
         images,
+        sizes,
       });
       setName("");
       setPrice("");
       setDescription("");
       setImages([]);
+      setSizes([...SIZES]);
       if (fileRef.current) fileRef.current.value = "";
       toast.success("Product added — live for everyone");
     } catch (err) {
@@ -241,6 +252,31 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
+              <Label>Available sizes</Label>
+              <div className="flex flex-wrap gap-2">
+                {SIZES.map((s) => {
+                  const active = sizes.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSize(s)}
+                      className={`min-w-12 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background hover:bg-accent"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tap to toggle which sizes customers can pick for this product.
+              </p>
+            </div>
+            <div className="space-y-2 md:col-span-2">
               <Label>Images (any type — jpg, png, webp, gif...)</Label>
               <input
                 ref={fileRef}
@@ -305,6 +341,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <p className="text-xs text-muted-foreground">
                         {cat?.name ?? "—"} • Rs. {p.price.toLocaleString()} •{" "}
                         {p.images.length} image{p.images.length > 1 ? "s" : ""}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Sizes: {p.sizes.length > 0 ? p.sizes.join(", ") : "—"}
                       </p>
                     </div>
                     <button

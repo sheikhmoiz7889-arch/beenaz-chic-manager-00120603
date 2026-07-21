@@ -9,25 +9,28 @@ export type Product = {
   categoryId: string;
   description?: string;
   images: string[];
+  sizes: string[];
   createdAt: number;
 };
 export type CartItem = { productId: string; qty: number; size: string };
 
 export const SIZES = ["S", "M", "L", "XL", "XXL"] as const;
 
-const CART_KEY = "beenaz_cart_v1";
-
 type Data = { categories: Category[]; products: Product[] };
 
 let dataCache: Data = { categories: [], products: [] };
-let cartCache: CartItem[] | null = null;
+let cartCache: CartItem[] = [];
 let initialized = false;
+let cartInitialized = false;
 
 const listeners = new Set<() => void>();
 const cartListeners = new Set<() => void>();
 
 function emit() {
   listeners.forEach((l) => l());
+}
+function emitCart() {
+  cartListeners.forEach((l) => l());
 }
 
 type CategoryRow = { id: string; name: string };
@@ -38,8 +41,10 @@ type ProductRow = {
   category_id: string | null;
   description: string | null;
   images: string[] | null;
+  sizes: string[] | null;
   created_at: string;
 };
+type CartRow = { product_id: string; size: string; qty: number };
 
 function mapProduct(r: ProductRow): Product {
   return {
@@ -49,6 +54,7 @@ function mapProduct(r: ProductRow): Product {
     categoryId: r.category_id ?? "",
     description: r.description ?? "",
     images: r.images ?? [],
+    sizes: r.sizes && r.sizes.length > 0 ? r.sizes : [...SIZES],
     createdAt: new Date(r.created_at).getTime(),
   };
 }
@@ -65,27 +71,32 @@ async function initialLoad() {
   emit();
 }
 
+async function loadCart() {
+  const { data } = await supabase
+    .from("cart_items")
+    .select("product_id,size,qty")
+    .order("created_at", { ascending: true });
+  cartCache = (data ?? []).map((r: CartRow) => ({
+    productId: r.product_id,
+    size: r.size,
+    qty: r.qty,
+  }));
+  emitCart();
+}
+
 function subscribeRealtime() {
-  const channel = supabase
+  supabase
     .channel("shop-store")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "categories" },
-      () => {
-        void initialLoad();
-      },
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "products" },
-      () => {
-        void initialLoad();
-      },
-    )
+    .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, () => {
+      void initialLoad();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+      void initialLoad();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "cart_items" }, () => {
+      void loadCart();
+    })
     .subscribe();
-  return () => {
-    void supabase.removeChannel(channel);
-  };
 }
 
 function ensureInit() {
@@ -94,21 +105,10 @@ function ensureInit() {
   void initialLoad();
   subscribeRealtime();
 }
-
-function readCart(): CartItem[] {
-  if (cartCache) return cartCache;
-  if (typeof window === "undefined") return (cartCache = []);
-  try {
-    cartCache = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-  } catch {
-    cartCache = [];
-  }
-  return cartCache!;
-}
-function writeCart(c: CartItem[]) {
-  cartCache = c;
-  localStorage.setItem(CART_KEY, JSON.stringify(c));
-  cartListeners.forEach((l) => l());
+function ensureCartInit() {
+  if (cartInitialized || typeof window === "undefined") return;
+  cartInitialized = true;
+  void loadCart();
 }
 
 export const store = {
@@ -137,6 +137,7 @@ export const store = {
       category_id: p.categoryId,
       description: p.description ?? "",
       images: p.images,
+      sizes: p.sizes,
     });
     if (error) throw error;
     await initialLoad();
@@ -149,62 +150,70 @@ export const store = {
 };
 
 export const cart = {
-  get: readCart,
+  get: () => cartCache,
   subscribe(l: () => void) {
+    ensureInit();
+    ensureCartInit();
     cartListeners.add(l);
     return () => {
       cartListeners.delete(l);
     };
   },
-  add(productId: string, size: string) {
-    const c = readCart();
-    const existing = c.find((i) => i.productId === productId && i.size === size);
-    const next = existing
-      ? c.map((i) =>
-          i.productId === productId && i.size === size ? { ...i, qty: i.qty + 1 } : i,
-        )
-      : [...c, { productId, qty: 1, size }];
-    writeCart(next);
+  async add(productId: string, size: string) {
+    const existing = cartCache.find((i) => i.productId === productId && i.size === size);
+    if (existing) {
+      await supabase
+        .from("cart_items")
+        .update({ qty: existing.qty + 1 })
+        .eq("product_id", productId)
+        .eq("size", size);
+    } else {
+      await supabase
+        .from("cart_items")
+        .insert({ product_id: productId, size, qty: 1 });
+    }
+    await loadCart();
   },
-  remove(productId: string, size: string) {
-    writeCart(readCart().filter((i) => !(i.productId === productId && i.size === size)));
+  async remove(productId: string, size: string) {
+    await supabase
+      .from("cart_items")
+      .delete()
+      .eq("product_id", productId)
+      .eq("size", size);
+    await loadCart();
   },
-  setQty(productId: string, size: string, qty: number) {
+  async setQty(productId: string, size: string, qty: number) {
     if (qty <= 0) return cart.remove(productId, size);
-    writeCart(
-      readCart().map((i) =>
-        i.productId === productId && i.size === size ? { ...i, qty } : i,
-      ),
-    );
+    await supabase
+      .from("cart_items")
+      .update({ qty })
+      .eq("product_id", productId)
+      .eq("size", size);
+    await loadCart();
   },
-  clear() {
-    writeCart([]);
+  async clear() {
+    await supabase.from("cart_items").delete().neq("product_id", "00000000-0000-0000-0000-000000000000");
+    await loadCart();
   },
 };
 
 const emptyData: Data = { categories: [], products: [] };
+const emptyCart: CartItem[] = [];
 
 export function useStore() {
   return useSyncExternalStore(store.subscribe, store.get, () => emptyData);
 }
 export function useCart() {
-  return useSyncExternalStore(cart.subscribe, cart.get, () => [] as CartItem[]);
+  return useSyncExternalStore(cart.subscribe, cart.get, () => emptyCart);
 }
 
-/** Hook to know if initial load from cloud has happened (for empty-state UX). */
 export function useStoreReady() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     ensureInit();
-    let cancelled = false;
-    const check = () => {
-      if (cancelled) return;
-      if (initialized) setReady(true);
-    };
-    check();
+    if (initialized) setReady(true);
     const unsub = store.subscribe(() => setReady(true));
     return () => {
-      cancelled = true;
       unsub();
     };
   }, []);
