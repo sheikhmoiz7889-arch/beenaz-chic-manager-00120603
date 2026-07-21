@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          qty: number
+          size: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          qty?: number
+          size: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          qty?: number
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -41,6 +73,7 @@ export type Database = {
           images: string[]
           name: string
           price: number
+          sizes: string[]
         }
         Insert: {
           category_id?: string | null
@@ -50,6 +83,7 @@ export type Database = {
           images?: string[]
           name: string
           price?: number
+          sizes?: string[]
         }
         Update: {
           category_id?: string | null
@@ -59,6 +93,7 @@ export type Database = {
           images?: string[]
           name?: string
           price?: number
+          sizes?: string[]
         }
         Relationships: [
           {
