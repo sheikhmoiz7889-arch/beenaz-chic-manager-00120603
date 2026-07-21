@@ -182,10 +182,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               >
                 {c.name} ({products.filter((p) => p.categoryId === c.id).length})
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm(`Delete category "${c.name}" and its products?`)) {
-                      store.removeCategory(c.id);
-                      toast.success("Category removed");
+                      try {
+                        await store.removeCategory(c.id);
+                        toast.success("Category removed");
+                      } catch (err) {
+                        toast.error((err as Error).message || "Failed");
+                      }
                     }
                   }}
                   className="text-destructive hover:opacity-70"
