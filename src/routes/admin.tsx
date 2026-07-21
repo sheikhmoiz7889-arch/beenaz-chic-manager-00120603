@@ -97,7 +97,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setImages((prev) => [...prev, ...arr]);
   }
 
-  function submitProduct(e: React.FormEvent) {
+  async function submitProduct(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !price || !categoryId) {
       toast.error("Fill name, price and category");
@@ -107,19 +107,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Add at least one image");
       return;
     }
-    store.addProduct({
-      name,
-      price: Number(price),
-      categoryId,
-      description,
-      images,
-    });
-    setName("");
-    setPrice("");
-    setDescription("");
-    setImages([]);
-    if (fileRef.current) fileRef.current.value = "";
-    toast.success("Product added");
+    try {
+      await store.addProduct({
+        name,
+        price: Number(price),
+        categoryId,
+        description,
+        images,
+      });
+      setName("");
+      setPrice("");
+      setDescription("");
+      setImages([]);
+      if (fileRef.current) fileRef.current.value = "";
+      toast.success("Product added — live for everyone");
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to save product");
+    }
   }
 
   return (
@@ -149,12 +153,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           <h2 className="font-display text-xl">Categories</h2>
           <form
             className="mt-3 flex gap-2"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (!newCat.trim()) return;
-              store.addCategory(newCat.trim());
-              setNewCat("");
-              toast.success("Category added");
+              try {
+                await store.addCategory(newCat.trim());
+                setNewCat("");
+                toast.success("Category added");
+              } catch (err) {
+                toast.error((err as Error).message || "Failed");
+              }
             }}
           >
             <Input
@@ -174,10 +182,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               >
                 {c.name} ({products.filter((p) => p.categoryId === c.id).length})
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm(`Delete category "${c.name}" and its products?`)) {
-                      store.removeCategory(c.id);
-                      toast.success("Category removed");
+                      try {
+                        await store.removeCategory(c.id);
+                        toast.success("Category removed");
+                      } catch (err) {
+                        toast.error((err as Error).message || "Failed");
+                      }
                     }
                   }}
                   className="text-destructive hover:opacity-70"
@@ -296,10 +308,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </p>
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Delete "${p.name}"?`)) {
-                          store.removeProduct(p.id);
-                          toast.success("Product removed");
+                          try {
+                            await store.removeProduct(p.id);
+                            toast.success("Product removed");
+                          } catch (err) {
+                            toast.error((err as Error).message || "Failed");
+                          }
                         }
                       }}
                       className="text-destructive hover:opacity-70"
