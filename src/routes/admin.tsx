@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { store, useStore, fileToDataUrl } from "@/lib/shop-store";
+import { store, useStore, fileToDataUrl, SIZES } from "@/lib/shop-store";
 import { toast } from "sonner";
 
 const ADMIN_PASSWORD = "beenaz123";
@@ -82,7 +82,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>([...SIZES]);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  function toggleSize(s: string) {
+    setSizes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  }
 
   async function handleFiles(files: FileList | null) {
     if (!files) return;
@@ -107,6 +112,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Add at least one image");
       return;
     }
+    if (sizes.length === 0) {
+      toast.error("Select at least one available size");
+      return;
+    }
     try {
       await store.addProduct({
         name,
@@ -114,11 +123,13 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         categoryId,
         description,
         images,
+        sizes,
       });
       setName("");
       setPrice("");
       setDescription("");
       setImages([]);
+      setSizes([...SIZES]);
       if (fileRef.current) fileRef.current.value = "";
       toast.success("Product added — live for everyone");
     } catch (err) {
