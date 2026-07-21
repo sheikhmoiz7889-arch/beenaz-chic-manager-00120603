@@ -342,6 +342,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         {cat?.name ?? "—"} • Rs. {p.price.toLocaleString()} •{" "}
                         {p.images.length} image{p.images.length > 1 ? "s" : ""}
                       </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Sizes: {p.sizes.length > 0 ? p.sizes.join(", ") : "—"}
+                      </p>
                     </div>
                     <button
                       onClick={async () => {
