@@ -308,10 +308,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       </p>
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Delete "${p.name}"?`)) {
-                          store.removeProduct(p.id);
-                          toast.success("Product removed");
+                          try {
+                            await store.removeProduct(p.id);
+                            toast.success("Product removed");
+                          } catch (err) {
+                            toast.error((err as Error).message || "Failed");
+                          }
                         }
                       }}
                       className="text-destructive hover:opacity-70"
