@@ -153,12 +153,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           <h2 className="font-display text-xl">Categories</h2>
           <form
             className="mt-3 flex gap-2"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (!newCat.trim()) return;
-              store.addCategory(newCat.trim());
-              setNewCat("");
-              toast.success("Category added");
+              try {
+                await store.addCategory(newCat.trim());
+                setNewCat("");
+                toast.success("Category added");
+              } catch (err) {
+                toast.error((err as Error).message || "Failed");
+              }
             }}
           >
             <Input
