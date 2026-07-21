@@ -97,7 +97,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setImages((prev) => [...prev, ...arr]);
   }
 
-  function submitProduct(e: React.FormEvent) {
+  async function submitProduct(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !price || !categoryId) {
       toast.error("Fill name, price and category");
@@ -107,19 +107,23 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       toast.error("Add at least one image");
       return;
     }
-    store.addProduct({
-      name,
-      price: Number(price),
-      categoryId,
-      description,
-      images,
-    });
-    setName("");
-    setPrice("");
-    setDescription("");
-    setImages([]);
-    if (fileRef.current) fileRef.current.value = "";
-    toast.success("Product added");
+    try {
+      await store.addProduct({
+        name,
+        price: Number(price),
+        categoryId,
+        description,
+        images,
+      });
+      setName("");
+      setPrice("");
+      setDescription("");
+      setImages([]);
+      if (fileRef.current) fileRef.current.value = "";
+      toast.success("Product added — live for everyone");
+    } catch (err) {
+      toast.error((err as Error).message || "Failed to save product");
+    }
   }
 
   return (
