@@ -123,21 +123,23 @@ function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {categories.map((c) => (
-            <Link
-              key={c.id}
-              to="/shop"
-              search={{ cat: c.id }}
-              className="group flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-border bg-card p-4 text-center transition-all hover:border-primary hover:shadow-md"
-            >
-              <span className="font-display text-lg group-hover:text-primary">
-                {c.name}
-              </span>
-              <span className="mt-1 text-xs text-muted-foreground">
-                {products.filter((p) => p.categoryId === c.id).length} items
-              </span>
-            </Link>
-          ))}
+          {!loaded
+            ? Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
+            : categories.map((c) => (
+                <Link
+                  key={c.id}
+                  to="/shop"
+                  search={{ cat: c.id }}
+                  className="group flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-border bg-card p-4 text-center transition-all hover:border-primary hover:shadow-md"
+                >
+                  <span className="font-display text-lg group-hover:text-primary">
+                    {c.name}
+                  </span>
+                  <span className="mt-1 text-xs text-muted-foreground">
+                    {products.filter((p) => p.categoryId === c.id).length} items
+                  </span>
+                </Link>
+              ))}
         </div>
       </section>
 
@@ -147,7 +149,13 @@ function Home() {
           <h2 className="font-display text-3xl">Featured pieces</h2>
           <p className="text-sm text-muted-foreground">Handpicked from the latest collection</p>
         </div>
-        {featured.length === 0 ? (
+        {!loaded ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </div>
+        ) : featured.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-12 text-center">
             <p className="text-muted-foreground">
               No products yet. Visit the{" "}
