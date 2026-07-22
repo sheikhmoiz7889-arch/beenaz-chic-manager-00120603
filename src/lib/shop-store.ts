@@ -213,17 +213,19 @@ export function useCart() {
   return useSyncExternalStore(cart.subscribe, cart.get, () => emptyCart);
 }
 
-export function useStoreReady() {
-  const [ready, setReady] = useState(false);
+export function useStoreLoaded() {
+  const [state, setState] = useState(loaded);
   useEffect(() => {
     ensureInit();
-    if (initialized) setReady(true);
-    const unsub = store.subscribe(() => setReady(true));
+    if (loaded) setState(true);
+    const unsub = store.subscribe(() => {
+      if (loaded) setState(true);
+    });
     return () => {
       unsub();
     };
   }, []);
-  return ready;
+  return state;
 }
 
 export const WHATSAPP_NUMBER = "923086844441";
