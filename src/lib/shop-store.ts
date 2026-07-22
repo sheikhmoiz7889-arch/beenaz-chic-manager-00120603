@@ -136,34 +136,35 @@ export const store = {
       listeners.delete(l);
     };
   },
-  async addCategory(name: string) {
-    const { error } = await supabase.from("categories").insert({ name });
-    if (error) throw error;
+  async addCategory(name: string, password: string) {
+    await adminAddCategory({ data: { password, name } });
     await initialLoad();
   },
-  async removeCategory(id: string) {
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) throw error;
+  async removeCategory(id: string, password: string) {
+    await adminRemoveCategory({ data: { password, id } });
     await initialLoad();
   },
-  async addProduct(p: Omit<Product, "id" | "createdAt">) {
-    const { error } = await supabase.from("products").insert({
-      name: p.name,
-      price: p.price,
-      category_id: p.categoryId,
-      description: p.description ?? "",
-      images: p.images,
-      sizes: p.sizes,
+  async addProduct(p: Omit<Product, "id" | "createdAt">, password: string) {
+    await adminAddProduct({
+      data: {
+        password,
+        name: p.name,
+        price: p.price,
+        categoryId: p.categoryId,
+        description: p.description ?? "",
+        images: p.images,
+        sizes: p.sizes as ("S" | "M" | "L" | "XL" | "XXL")[],
+      },
     });
-    if (error) throw error;
     await initialLoad();
   },
-  async removeProduct(id: string) {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) throw error;
+  async removeProduct(id: string, password: string) {
+    await adminRemoveProduct({ data: { password, id } });
     await initialLoad();
   },
 };
+
+type Size = "S" | "M" | "L" | "XL" | "XXL";
 
 export const cart = {
   get: () => cartCache,
@@ -176,39 +177,19 @@ export const cart = {
     };
   },
   async add(productId: string, size: string) {
-    const existing = cartCache.find((i) => i.productId === productId && i.size === size);
-    if (existing) {
-      await supabase
-        .from("cart_items")
-        .update({ qty: existing.qty + 1 })
-        .eq("product_id", productId)
-        .eq("size", size);
-    } else {
-      await supabase
-        .from("cart_items")
-        .insert({ product_id: productId, size, qty: 1 });
-    }
+    await cartAdd({ data: { productId, size: size as Size } });
     await loadCart();
   },
   async remove(productId: string, size: string) {
-    await supabase
-      .from("cart_items")
-      .delete()
-      .eq("product_id", productId)
-      .eq("size", size);
+    await cartRemove({ data: { productId, size: size as Size } });
     await loadCart();
   },
   async setQty(productId: string, size: string, qty: number) {
-    if (qty <= 0) return cart.remove(productId, size);
-    await supabase
-      .from("cart_items")
-      .update({ qty })
-      .eq("product_id", productId)
-      .eq("size", size);
+    await cartSetQty({ data: { productId, size: size as Size, qty } });
     await loadCart();
   },
   async clear() {
-    await supabase.from("cart_items").delete().neq("product_id", "00000000-0000-0000-0000-000000000000");
+    await cartClear();
     await loadCart();
   },
 };
