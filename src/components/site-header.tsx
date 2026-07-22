@@ -8,11 +8,11 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="flex flex-col leading-tight">
-          <span className="font-display text-xl font-bold tracking-wide text-primary">
+        <Link to="/" className="flex flex-col leading-none">
+          <span className="font-display text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
             Beenaz
           </span>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
+          <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-muted-foreground">
             Fashion House
           </span>
         </Link>

@@ -1,22 +1,57 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, MessageCircle, MapPin, Phone, Sparkles } from "lucide-react";
+import { ArrowRight, MessageCircle, MapPin, Phone, Sparkles, Truck } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
-import { useStore, whatsappOrderUrl } from "@/lib/shop-store";
+import { useStore, useStoreLoaded, whatsappOrderUrl } from "@/lib/shop-store";
 import heroImg from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
+function ProductSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="aspect-[3/4] w-full animate-pulse bg-muted" />
+      <div className="flex flex-col gap-3 p-4">
+        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+        <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="h-8 animate-pulse rounded bg-muted" />
+          <div className="h-8 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategorySkeleton() {
+  return <div className="aspect-[4/3] animate-pulse rounded-xl bg-muted" />;
+}
+
 function Home() {
   const { products, categories } = useStore();
+  const loaded = useStoreLoaded();
   const featured = products.slice(0, 8);
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
+
+      {/* Announcement ticker */}
+      <div className="overflow-hidden border-b border-border bg-primary text-primary-foreground">
+        <div className="flex animate-[marquee_22s_linear_infinite] whitespace-nowrap py-2 text-sm font-medium tracking-wide">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <span key={i} className="mx-8 inline-flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              Cash on delivery all over Pakistan
+              <span className="mx-2 opacity-60">•</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -49,13 +84,16 @@ function Home() {
                 </a>
               </Button>
             </div>
-            <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-primary" /> Bahria Town, Lahore
+                <MapPin className="h-4 w-4 text-primary" /> SQ 99 Mall, Bahria Town, Lahore
               </span>
-              <span className="flex items-center gap-1.5">
-                <Phone className="h-4 w-4 text-primary" /> 0308 6844441
-              </span>
+              <a
+                href="tel:03086844441"
+                className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary"
+              >
+                <Phone className="h-4 w-4 text-primary" /> 0308-6844441
+              </a>
             </div>
           </div>
           <div className="relative">
@@ -65,6 +103,8 @@ function Home() {
               alt="Beenaz Fashion House stitched collection"
               width={1600}
               height={1000}
+              loading="eager"
+              fetchPriority="high"
               className="aspect-[4/5] w-full rounded-2xl object-cover shadow-2xl"
             />
           </div>
@@ -83,21 +123,23 @@ function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {categories.map((c) => (
-            <Link
-              key={c.id}
-              to="/shop"
-              search={{ cat: c.id }}
-              className="group flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-border bg-card p-4 text-center transition-all hover:border-primary hover:shadow-md"
-            >
-              <span className="font-display text-lg group-hover:text-primary">
-                {c.name}
-              </span>
-              <span className="mt-1 text-xs text-muted-foreground">
-                {products.filter((p) => p.categoryId === c.id).length} items
-              </span>
-            </Link>
-          ))}
+          {!loaded
+            ? Array.from({ length: 4 }).map((_, i) => <CategorySkeleton key={i} />)
+            : categories.map((c) => (
+                <Link
+                  key={c.id}
+                  to="/shop"
+                  search={{ cat: c.id }}
+                  className="group flex aspect-[4/3] flex-col items-center justify-center rounded-xl border border-border bg-card p-4 text-center transition-all hover:border-primary hover:shadow-md"
+                >
+                  <span className="font-display text-lg group-hover:text-primary">
+                    {c.name}
+                  </span>
+                  <span className="mt-1 text-xs text-muted-foreground">
+                    {products.filter((p) => p.categoryId === c.id).length} items
+                  </span>
+                </Link>
+              ))}
         </div>
       </section>
 
@@ -107,7 +149,13 @@ function Home() {
           <h2 className="font-display text-3xl">Featured pieces</h2>
           <p className="text-sm text-muted-foreground">Handpicked from the latest collection</p>
         </div>
-        {featured.length === 0 ? (
+        {!loaded ? (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </div>
+        ) : featured.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-12 text-center">
             <p className="text-muted-foreground">
               No products yet. Visit the{" "}

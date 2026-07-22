@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { ProductCard } from "@/components/product-card";
-import { useStore } from "@/lib/shop-store";
+import { useStore, useStoreLoaded } from "@/lib/shop-store";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
@@ -14,10 +14,24 @@ export const Route = createFileRoute("/shop")({
   component: Shop,
 });
 
+function ProductSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="aspect-[3/4] w-full animate-pulse bg-muted" />
+      <div className="flex flex-col gap-3 p-4">
+        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+        <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
+      </div>
+    </div>
+  );
+}
+
 function Shop() {
   const { cat } = Route.useSearch();
   const navigate = useNavigate({ from: "/shop" });
   const { products, categories } = useStore();
+  const loaded = useStoreLoaded();
 
   const filtered = cat ? products.filter((p) => p.categoryId === cat) : products;
 
@@ -54,7 +68,13 @@ function Shop() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {!loaded ? (
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="mt-10 rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
             No products in this category yet.
           </div>

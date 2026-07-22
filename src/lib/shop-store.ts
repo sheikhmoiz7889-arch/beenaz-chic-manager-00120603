@@ -59,6 +59,11 @@ function mapProduct(r: ProductRow): Product {
   };
 }
 
+let loaded = false;
+export function isLoaded() {
+  return loaded;
+}
+
 async function initialLoad() {
   const [cats, prods] = await Promise.all([
     supabase.from("categories").select("id,name").order("created_at", { ascending: true }),
@@ -68,6 +73,7 @@ async function initialLoad() {
     categories: (cats.data ?? []).map((c: CategoryRow) => ({ id: c.id, name: c.name })),
     products: (prods.data ?? []).map((p) => mapProduct(p as ProductRow)),
   };
+  loaded = true;
   emit();
 }
 
@@ -207,17 +213,19 @@ export function useCart() {
   return useSyncExternalStore(cart.subscribe, cart.get, () => emptyCart);
 }
 
-export function useStoreReady() {
-  const [ready, setReady] = useState(false);
+export function useStoreLoaded() {
+  const [state, setState] = useState(loaded);
   useEffect(() => {
     ensureInit();
-    if (initialized) setReady(true);
-    const unsub = store.subscribe(() => setReady(true));
+    if (loaded) setState(true);
+    const unsub = store.subscribe(() => {
+      if (loaded) setState(true);
+    });
     return () => {
       unsub();
     };
   }, []);
-  return ready;
+  return state;
 }
 
 export const WHATSAPP_NUMBER = "923086844441";
