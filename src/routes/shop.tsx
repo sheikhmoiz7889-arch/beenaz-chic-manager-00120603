@@ -68,7 +68,13 @@ function Shop() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {!loaded ? (
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductSkeleton key={i} />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="mt-10 rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
             No products in this category yet.
           </div>
