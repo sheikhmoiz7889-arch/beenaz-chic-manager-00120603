@@ -1,5 +1,15 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  adminAddCategory,
+  adminAddProduct,
+  adminRemoveCategory,
+  adminRemoveProduct,
+  cartAdd,
+  cartClear,
+  cartRemove,
+  cartSetQty,
+} from "@/lib/shop.functions";
 
 export type Category = { id: string; name: string };
 export type Product = {
