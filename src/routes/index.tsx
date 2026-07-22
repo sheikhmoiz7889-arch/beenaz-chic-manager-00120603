@@ -40,6 +40,19 @@ function Home() {
     <div className="min-h-screen">
       <SiteHeader />
 
+      {/* Announcement ticker */}
+      <div className="overflow-hidden border-b border-border bg-primary text-primary-foreground">
+        <div className="flex animate-[marquee_22s_linear_infinite] whitespace-nowrap py-2 text-sm font-medium tracking-wide">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <span key={i} className="mx-8 inline-flex items-center gap-2">
+              <Truck className="h-4 w-4" />
+              Cash on delivery all over Pakistan
+              <span className="mx-2 opacity-60">•</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-2 md:items-center md:py-24">
@@ -71,13 +84,16 @@ function Home() {
                 </a>
               </Button>
             </div>
-            <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 text-primary" /> Bahria Town, Lahore
+                <MapPin className="h-4 w-4 text-primary" /> SQ 99 Mall, Bahria Town, Lahore
               </span>
-              <span className="flex items-center gap-1.5">
-                <Phone className="h-4 w-4 text-primary" /> 0308 6844441
-              </span>
+              <a
+                href="tel:03086844441"
+                className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary"
+              >
+                <Phone className="h-4 w-4 text-primary" /> 0308-6844441
+              </a>
             </div>
           </div>
           <div className="relative">
@@ -87,6 +103,8 @@ function Home() {
               alt="Beenaz Fashion House stitched collection"
               width={1600}
               height={1000}
+              loading="eager"
+              fetchPriority="high"
               className="aspect-[4/5] w-full rounded-2xl object-cover shadow-2xl"
             />
           </div>
