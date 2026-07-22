@@ -16,8 +16,12 @@ import {
 import { store, useStore, fileToDataUrl, SIZES } from "@/lib/shop-store";
 import { toast } from "sonner";
 
-const ADMIN_PASSWORD = "beenaz123";
-const AUTH_KEY = "beenaz_admin_auth";
+const AUTH_KEY = "beenaz_admin_pw";
+
+function getAdminPassword(): string {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem(AUTH_KEY) ?? "";
+}
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -25,7 +29,7 @@ export const Route = createFileRoute("/admin")({
 
 function Admin() {
   const [authed, setAuthed] = useState(
-    () => typeof window !== "undefined" && sessionStorage.getItem(AUTH_KEY) === "1",
+    () => typeof window !== "undefined" && !!sessionStorage.getItem(AUTH_KEY),
   );
 
   if (!authed) return <Login onOk={() => setAuthed(true)} />;
@@ -34,6 +38,7 @@ function Admin() {
 
 function Login({ onOk }: { onOk: () => void }) {
   const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
   return (
     <div className="min-h-screen">
       <SiteHeader />
@@ -44,12 +49,18 @@ function Login({ onOk }: { onOk: () => void }) {
         </p>
         <form
           className="mt-6 space-y-3"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (pw === ADMIN_PASSWORD) {
-              sessionStorage.setItem(AUTH_KEY, "1");
+            if (!pw) return;
+            setBusy(true);
+            try {
+              // Verify by attempting a no-op admin call (add + remove a probe category).
+              // Simpler: store the password and let the first mutation validate.
+              sessionStorage.setItem(AUTH_KEY, pw);
               onOk();
-            } else toast.error("Wrong password");
+            } finally {
+              setBusy(false);
+            }
           }}
         >
           <Input
