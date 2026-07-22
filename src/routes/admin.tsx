@@ -179,7 +179,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               e.preventDefault();
               if (!newCat.trim()) return;
               try {
-                await store.addCategory(newCat.trim());
+                await store.addCategory(newCat.trim(), getAdminPassword());
                 setNewCat("");
                 toast.success("Category added");
               } catch (err) {
@@ -207,7 +207,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={async () => {
                     if (confirm(`Delete category "${c.name}" and its products?`)) {
                       try {
-                        await store.removeCategory(c.id);
+                        await store.removeCategory(c.id, getAdminPassword());
                         toast.success("Category removed");
                       } catch (err) {
                         toast.error((err as Error).message || "Failed");
@@ -361,7 +361,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       onClick={async () => {
                         if (confirm(`Delete "${p.name}"?`)) {
                           try {
-                            await store.removeProduct(p.id);
+                            await store.removeProduct(p.id, getAdminPassword());
                             toast.success("Product removed");
                           } catch (err) {
                             toast.error((err as Error).message || "Failed");
