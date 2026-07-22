@@ -59,6 +59,11 @@ function mapProduct(r: ProductRow): Product {
   };
 }
 
+let loaded = false;
+export function isLoaded() {
+  return loaded;
+}
+
 async function initialLoad() {
   const [cats, prods] = await Promise.all([
     supabase.from("categories").select("id,name").order("created_at", { ascending: true }),
@@ -68,6 +73,7 @@ async function initialLoad() {
     categories: (cats.data ?? []).map((c: CategoryRow) => ({ id: c.id, name: c.name })),
     products: (prods.data ?? []).map((p) => mapProduct(p as ProductRow)),
   };
+  loaded = true;
   emit();
 }
 
