@@ -1,17 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, MessageCircle, MapPin, Phone, Sparkles } from "lucide-react";
+import { ArrowRight, MessageCircle, MapPin, Phone, Sparkles, Truck } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
-import { useStore, whatsappOrderUrl } from "@/lib/shop-store";
+import { useStore, useStoreLoaded, whatsappOrderUrl } from "@/lib/shop-store";
 import heroImg from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/")({
   component: Home,
 });
 
+function ProductSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="aspect-[3/4] w-full animate-pulse bg-muted" />
+      <div className="flex flex-col gap-3 p-4">
+        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+        <div className="h-5 w-1/3 animate-pulse rounded bg-muted" />
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="h-8 animate-pulse rounded bg-muted" />
+          <div className="h-8 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategorySkeleton() {
+  return <div className="aspect-[4/3] animate-pulse rounded-xl bg-muted" />;
+}
+
 function Home() {
   const { products, categories } = useStore();
+  const loaded = useStoreLoaded();
   const featured = products.slice(0, 8);
 
   return (
