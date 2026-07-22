@@ -135,7 +135,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         description,
         images,
         sizes,
-      });
+      }, getAdminPassword());
       setName("");
       setPrice("");
       setDescription("");
