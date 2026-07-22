@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ShoppingBag, Phone } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/shop-store";
 
 export function SiteHeader() {
