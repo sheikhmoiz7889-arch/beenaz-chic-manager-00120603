@@ -22,12 +22,10 @@ export function SiteHeader() {
           <Link to="/admin" className="hover:text-primary">Admin</Link>
         </nav>
         <div className="flex items-center gap-3">
-          <a
-            href="tel:03086844441"
-            className="hidden items-center gap-1.5 text-sm text-muted-foreground hover:text-primary sm:flex"
-          >
-            <Phone className="h-4 w-4" /> 0308 6844441
-          </a>
+          <div className="hidden flex-col text-right text-sm leading-tight text-muted-foreground sm:flex">
+            <a href="tel:03086844441" className="hover:text-primary">0308 6844441</a>
+            <a href="tel:03244311936" className="hover:text-primary">0324 4311936</a>
+          </div>
           <Link
             to="/cart"
             className="relative rounded-full border border-border p-2 hover:bg-accent"
@@ -67,6 +65,7 @@ export function SiteFooter() {
           <h4 className="mb-2 font-semibold">Contact</h4>
           <p className="text-muted-foreground">
             Phone: <a href="tel:03086844441" className="text-primary">0308 6844441</a><br />
+            Phone: <a href="tel:03244311936" className="text-primary">0324 4311936</a><br />
             WhatsApp orders welcome
           </p>
         </div>

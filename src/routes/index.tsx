@@ -94,6 +94,12 @@ function Home() {
               >
                 <Phone className="h-4 w-4 text-primary" /> 0308-6844441
               </a>
+              <a
+                href="tel:03244311936"
+                className="flex items-center gap-1.5 font-medium text-foreground hover:text-primary"
+              >
+                <Phone className="h-4 w-4 text-primary" /> 0324-4311936
+              </a>
             </div>
           </div>
           <div className="relative">
