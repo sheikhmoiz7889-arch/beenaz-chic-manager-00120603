@@ -7,22 +7,28 @@ export function SiteHeader() {
   const count = cartItems.reduce((n, i) => n + i.qty, 0);
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="flex flex-col leading-none">
-          <span className="font-display text-3xl font-extrabold tracking-tight text-primary md:text-4xl">
-            Beenaz
-          </span>
-          <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.35em] text-muted-foreground">
-            Fashion House
-          </span>
-        </Link>
+      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-4 md:h-24">
+        {/* Left: nav */}
         <nav className="hidden gap-8 text-sm font-medium md:flex">
           <Link to="/" className="hover:text-primary">Home</Link>
           <Link to="/shop" className="hover:text-primary">Shop</Link>
           <Link to="/admin" className="hover:text-primary">Admin</Link>
         </nav>
-        <div className="flex items-center gap-3">
-          <div className="hidden flex-col text-right text-sm leading-tight text-muted-foreground sm:flex">
+        <div className="md:hidden" />
+
+        {/* Center: brand */}
+        <Link to="/" className="flex flex-col items-center justify-center leading-none">
+          <span className="font-display text-4xl font-black tracking-tight text-primary md:text-6xl">
+            Beenaz
+          </span>
+          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.4em] text-muted-foreground md:text-xs">
+            Fashion House
+          </span>
+        </Link>
+
+        {/* Right: contact + cart */}
+        <div className="flex items-center justify-end gap-3">
+          <div className="hidden flex-col text-right text-sm leading-tight text-muted-foreground lg:flex">
             <a href="tel:03086844441" className="hover:text-primary">0308 6844441</a>
             <a href="tel:03244311936" className="hover:text-primary">0324 4311936</a>
           </div>
