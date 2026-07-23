@@ -109,7 +109,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       const uploaded = await Promise.all(
         Array.from(files).map(async (f) => {
           try {
-            return await uploadProductImage(f);
+            return await uploadProductImage(f, getAdminPassword());
           } catch (err) {
             toast.error(`${f.name}: ${(err as Error).message}`);
             return null;

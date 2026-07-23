@@ -235,20 +235,33 @@ export function fileToDataUrl(file: File): Promise<string> {
 }
 
 /**
- * Upload an image to the public `product-images` bucket and return its public URL.
- * Much faster than embedding base64 data URLs in the product row.
+ * Upload an image via the admin server function (service role) and return its public URL.
+ * Requires the admin password — client-side uploads are blocked by storage policy.
  */
-export async function uploadProductImage(file: File): Promise<string> {
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
-  const { error } = await supabase.storage
-    .from("product-images")
-    .upload(path, file, {
-      cacheControl: "31536000",
-      contentType: file.type || undefined,
-      upsert: false,
-    });
-  if (error) throw new Error(error.message);
-  const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-  return data.publicUrl;
+import { adminUploadImage } from "@/lib/shop.functions";
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadProductImage(file: File, password: string): Promise<string> {
+  const dataBase64 = await fileToBase64(file);
+  const res = await adminUploadImage({
+    data: {
+      password,
+      filename: file.name || "upload.jpg",
+      contentType: file.type || "application/octet-stream",
+      dataBase64,
+    },
+  });
+  return res.url;
 }

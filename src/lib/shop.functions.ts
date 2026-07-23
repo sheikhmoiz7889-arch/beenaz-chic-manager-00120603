@@ -79,6 +79,36 @@ export const adminRemoveProduct = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminUploadImage = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    adminSchema
+      .extend({
+        filename: z.string().min(1).max(200),
+        contentType: z.string().min(1).max(120),
+        // base64-encoded file bytes; cap ~8MB base64 (~6MB raw)
+        dataBase64: z.string().min(1).max(8_500_000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    checkAdmin(data.password);
+    const db = await getAdmin();
+    const extRaw = (data.filename.split(".").pop() || "jpg").toLowerCase();
+    const ext = extRaw.replace(/[^a-z0-9]/g, "").slice(0, 6) || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
+    const bytes = Buffer.from(data.dataBase64, "base64");
+    const { error } = await db.storage
+      .from("product-images")
+      .upload(path, bytes, {
+        cacheControl: "31536000",
+        contentType: data.contentType || "application/octet-stream",
+        upsert: false,
+      });
+    if (error) throw new Error(error.message);
+    const { data: pub } = db.storage.from("product-images").getPublicUrl(path);
+    return { url: pub.publicUrl };
+  });
+
 // Cart: publicly writable but server-validated (product/size must exist).
 const cartKey = z.object({
   productId: z.string().uuid(),
