@@ -301,15 +301,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               </p>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Images (any type — jpg, png, webp, gif...)</Label>
+              <Label>Images (uploaded to cloud storage — any format)</Label>
               <input
                 ref={fileRef}
                 type="file"
                 accept="image/*"
                 multiple
+                disabled={uploading}
                 onChange={(e) => handleFiles(e.target.files)}
-                className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground hover:file:bg-primary/90"
+                className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
               />
+              {uploading && (
+                <p className="text-xs text-muted-foreground">Uploading images…</p>
+              )}
               {images.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {images.map((src, i) => (
@@ -317,6 +321,8 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       <img
                         src={src}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="h-20 w-20 rounded-md object-cover"
                       />
                       <button
@@ -334,7 +340,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               )}
             </div>
             <div className="md:col-span-2">
-              <Button type="submit" size="lg">
+              <Button type="submit" size="lg" disabled={uploading}>
                 <Upload className="mr-1 h-4 w-4" /> Save product
               </Button>
             </div>
