@@ -49,7 +49,7 @@ export const adminAddProduct = createServerFn({ method: "POST" })
         price: z.number().nonnegative().max(10_000_000),
         categoryId: z.string().uuid(),
         description: z.string().max(4000).optional().default(""),
-        images: z.array(z.string().max(3_000_000)).min(1).max(20),
+        images: z.array(z.string().min(1)).min(1).max(40),
         sizes: z.array(SIZE_ENUM).min(1),
       })
       .parse(d),

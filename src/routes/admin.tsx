@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { store, useStore, fileToDataUrl, SIZES } from "@/lib/shop-store";
+import { store, useStore, uploadProductImage, SIZES } from "@/lib/shop-store";
 import { toast } from "sonner";
 
 const AUTH_KEY = "beenaz_admin_pw";
@@ -100,17 +100,30 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setSizes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   }
 
+  const [uploading, setUploading] = useState(false);
+
   async function handleFiles(files: FileList | null) {
-    if (!files) return;
-    const arr: string[] = [];
-    for (const f of Array.from(files)) {
-      try {
-        arr.push(await fileToDataUrl(f));
-      } catch {
-        /* skip */
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded = await Promise.all(
+        Array.from(files).map(async (f) => {
+          try {
+            return await uploadProductImage(f);
+          } catch (err) {
+            toast.error(`${f.name}: ${(err as Error).message}`);
+            return null;
+          }
+        }),
+      );
+      const urls = uploaded.filter((u): u is string => !!u);
+      if (urls.length > 0) {
+        setImages((prev) => [...prev, ...urls]);
+        toast.success(`${urls.length} image${urls.length > 1 ? "s" : ""} uploaded`);
       }
+    } finally {
+      setUploading(false);
     }
-    setImages((prev) => [...prev, ...arr]);
   }
 
   async function submitProduct(e: React.FormEvent) {
