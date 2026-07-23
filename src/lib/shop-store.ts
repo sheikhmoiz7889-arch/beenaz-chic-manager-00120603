@@ -1,15 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  adminAddCategory,
-  adminAddProduct,
-  adminRemoveCategory,
-  adminRemoveProduct,
-  cartAdd,
-  cartClear,
-  cartRemove,
-  cartSetQty,
-} from "@/lib/shop.functions";
 
 export type Category = { id: string; name: string };
 export type Product = {
@@ -136,35 +126,35 @@ export const store = {
       listeners.delete(l);
     };
   },
-  async addCategory(name: string, password: string) {
-    await adminAddCategory({ data: { password, name } });
+  async addCategory(name: string, _password?: string) {
+    const { error } = await supabase.from("categories").insert({ name });
+    if (error) throw error;
     await initialLoad();
   },
-  async removeCategory(id: string, password: string) {
-    await adminRemoveCategory({ data: { password, id } });
+  async removeCategory(id: string, _password?: string) {
+    await supabase.from("products").delete().eq("category_id", id);
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    if (error) throw error;
     await initialLoad();
   },
-  async addProduct(p: Omit<Product, "id" | "createdAt">, password: string) {
-    await adminAddProduct({
-      data: {
-        password,
-        name: p.name,
-        price: p.price,
-        categoryId: p.categoryId,
-        description: p.description ?? "",
-        images: p.images,
-        sizes: p.sizes as ("S" | "M" | "L" | "XL" | "XXL")[],
-      },
+  async addProduct(p: Omit<Product, "id" | "createdAt">, _password?: string) {
+    const { error } = await supabase.from("products").insert({
+      name: p.name,
+      price: p.price,
+      category_id: p.categoryId,
+      description: p.description ?? "",
+      images: p.images,
+      sizes: p.sizes,
     });
+    if (error) throw error;
     await initialLoad();
   },
-  async removeProduct(id: string, password: string) {
-    await adminRemoveProduct({ data: { password, id } });
+  async removeProduct(id: string, _password?: string) {
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) throw error;
     await initialLoad();
   },
 };
-
-type Size = "S" | "M" | "L" | "XL" | "XXL";
 
 export const cart = {
   get: () => cartCache,
@@ -177,19 +167,48 @@ export const cart = {
     };
   },
   async add(productId: string, size: string) {
-    await cartAdd({ data: { productId, size: size as Size } });
+    const { data: existing } = await supabase
+      .from("cart_items")
+      .select("id,qty")
+      .eq("product_id", productId)
+      .eq("size", size)
+      .maybeSingle();
+    if (existing) {
+      await supabase
+        .from("cart_items")
+        .update({ qty: existing.qty + 1 })
+        .eq("id", existing.id);
+    } else {
+      await supabase.from("cart_items").insert({ product_id: productId, size, qty: 1 });
+    }
     await loadCart();
   },
   async remove(productId: string, size: string) {
-    await cartRemove({ data: { productId, size: size as Size } });
+    await supabase
+      .from("cart_items")
+      .delete()
+      .eq("product_id", productId)
+      .eq("size", size);
     await loadCart();
   },
   async setQty(productId: string, size: string, qty: number) {
-    await cartSetQty({ data: { productId, size: size as Size, qty } });
+    if (qty <= 0) {
+      await supabase
+        .from("cart_items")
+        .delete()
+        .eq("product_id", productId)
+        .eq("size", size);
+    } else {
+      await supabase
+        .from("cart_items")
+        .update({ qty })
+        .eq("product_id", productId)
+        .eq("size", size);
+    }
     await loadCart();
   },
   async clear() {
-    await cartClear();
+    await supabase.from("cart_items").delete().neq("id", "00000000-0000-0000-0000-000000000000");
     await loadCart();
   },
 };
@@ -235,33 +254,20 @@ export function fileToDataUrl(file: File): Promise<string> {
 }
 
 /**
- * Upload an image via the admin server function (service role) and return its public URL.
- * Requires the admin password — client-side uploads are blocked by storage policy.
+ * Upload an image directly to the `product-images` storage bucket from the browser
+ * and return its public URL. Accepts any file format.
  */
-import { adminUploadImage } from "@/lib/shop.functions";
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const comma = result.indexOf(",");
-      resolve(comma >= 0 ? result.slice(comma + 1) : result);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-export async function uploadProductImage(file: File, password: string): Promise<string> {
-  const dataBase64 = await fileToBase64(file);
-  const res = await adminUploadImage({
-    data: {
-      password,
-      filename: file.name || "upload.jpg",
+export async function uploadProductImage(file: File, _password?: string): Promise<string> {
+  const ext = (file.name.split(".").pop() || "bin").toLowerCase();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from("product-images")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
       contentType: file.type || "application/octet-stream",
-      dataBase64,
-    },
-  });
-  return res.url;
+    });
+  if (error) throw error;
+  const { data } = supabase.storage.from("product-images").getPublicUrl(path);
+  return data.publicUrl;
 }
