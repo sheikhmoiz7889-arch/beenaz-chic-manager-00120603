@@ -36,11 +36,41 @@ function Shop() {
   const { products, categories } = useStore();
   const loaded = useStoreLoaded();
 
-  const filtered = cat ? products.filter((p) => p.categoryId === cat) : products;
+  const filtered = useMemo(
+    () => (cat ? products.filter((p) => p.categoryId === cat) : products),
+    [products, cat],
+  );
+
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  // Reset paging when category or dataset size changes
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [cat, filtered.length]);
+
+  const shown = filtered.slice(0, visible);
+  const hasMore = visible < filtered.length;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasMore) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible((v) => Math.min(v + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, filtered.length]);
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
+
       <div className="mx-auto max-w-7xl px-4 py-10">
         <h1 className="font-display text-4xl">Shop</h1>
         <p className="mt-1 text-sm text-muted-foreground">
