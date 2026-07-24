@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { ProductCard } from "@/components/product-card";
 import { useStore, useStoreLoaded } from "@/lib/shop-store";
 import { cn } from "@/lib/utils";
+
+const PAGE_SIZE = 12;
 
 const searchSchema = z.object({
   cat: z.string().optional(),
@@ -33,11 +36,41 @@ function Shop() {
   const { products, categories } = useStore();
   const loaded = useStoreLoaded();
 
-  const filtered = cat ? products.filter((p) => p.categoryId === cat) : products;
+  const filtered = useMemo(
+    () => (cat ? products.filter((p) => p.categoryId === cat) : products),
+    [products, cat],
+  );
+
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  // Reset paging when category or dataset size changes
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [cat, filtered.length]);
+
+  const shown = filtered.slice(0, visible);
+  const hasMore = visible < filtered.length;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasMore) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible((v) => Math.min(v + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, filtered.length]);
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
+
       <div className="mx-auto max-w-7xl px-4 py-10">
         <h1 className="font-display text-4xl">Shop</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -79,11 +112,18 @@ function Shop() {
             No products in this category yet.
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <>
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {shown.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+              {hasMore &&
+                Array.from({ length: Math.min(PAGE_SIZE, filtered.length - visible) }).map(
+                  (_, i) => <ProductSkeleton key={`s-${i}`} />,
+                )}
+            </div>
+            {hasMore && <div ref={sentinelRef} className="h-1" aria-hidden />}
+          </>
         )}
       </div>
       <SiteFooter />
