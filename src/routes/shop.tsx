@@ -112,11 +112,18 @@ function Shop() {
             No products in this category yet.
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <>
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {shown.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+              {hasMore &&
+                Array.from({ length: Math.min(PAGE_SIZE, filtered.length - visible) }).map(
+                  (_, i) => <ProductSkeleton key={`s-${i}`} />,
+                )}
+            </div>
+            {hasMore && <div ref={sentinelRef} className="h-1" aria-hidden />}
+          </>
         )}
       </div>
       <SiteFooter />
