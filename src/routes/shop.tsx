@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { SiteHeader, SiteFooter } from "@/components/site-header";
 import { ProductCard } from "@/components/product-card";
 import { useStore, useStoreLoaded } from "@/lib/shop-store";
 import { cn } from "@/lib/utils";
+
+const PAGE_SIZE = 12;
 
 const searchSchema = z.object({
   cat: z.string().optional(),
