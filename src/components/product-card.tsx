@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ShoppingBag, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cart, whatsappOrderUrl, type Product } from "@/lib/shop-store";
@@ -8,10 +9,16 @@ export function ProductCard({ product }: { product: Product }) {
   const img = product.images[0];
   const available = product.sizes.length > 0 ? product.sizes : ["M"];
   const [size, setSize] = useState<string>(available[0]);
-  const orderMsg = `Assalam-o-Alaikum! I want to order:\n\n*${product.name}*\nSize: ${size}\nPrice: Rs. ${product.price}\n\nPlease share details.`;
+  const sku = `BFH-${product.id.slice(0, 8).toUpperCase()}`;
+  const orderMsg = `Assalam-o-Alaikum! I want to order:\n\n*${product.name}*\nSKU: ${sku}\nSize: ${size}\nPrice: Rs. ${product.price}\n\nPlease share details.`;
+
   return (
     <div className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-lg">
-      <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+      <Link
+        to="/product/$id"
+        params={{ id: product.id }}
+        className="relative block aspect-[3/4] overflow-hidden bg-muted"
+      >
         {img ? (
           <img
             src={img}
@@ -26,16 +33,16 @@ export function ProductCard({ product }: { product: Product }) {
             No image
           </div>
         )}
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div>
-          <h3 className="font-display text-lg leading-tight">{product.name}</h3>
+        <Link to="/product/$id" params={{ id: product.id }} className="block">
+          <h3 className="font-display text-lg leading-tight hover:text-primary">{product.name}</h3>
           {product.description && (
             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
               {product.description}
             </p>
           )}
-        </div>
+        </Link>
         <p className="text-lg font-semibold text-primary">Rs. {product.price.toLocaleString()}</p>
 
         <div>
